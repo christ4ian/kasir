@@ -73,15 +73,50 @@ section {
 /* Scanner Container */
 #scanner-container {
   width: 100%;
-  height: 60vh;
-  background-color: #000;
+  max-width: 480px;
+  margin: 0 auto; /* center */
   position: relative;
+  background-color: #000;
 }
 
+/* QuaggaJS view */
 .viewport {
   width: 100%;
-  height: 100%;
+  height: 300px; /* atur tinggi di sini */
   position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+/* Overlay garis bantu */
+.scanner-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 2px;
+  background: rgba(255,0,0,0.8);
+  transform: translate(-50%, -50%);
+  pointer-events: none; /* tidak bisa diklik */
+}
+
+/* Tombol scan dari galeri */
+.scan-gallery-wrapper {
+  text-align: center;
+  margin-top: 16px;
+}
+.scan-gallery-btn {
+  display: inline-flex;
+  align-items: center;
+  background-color: #1565c0;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.scan-gallery-btn .material-icons {
+  margin-right: 4px;
 }
 
 /* Floating Action Button (FAB) */
@@ -104,13 +139,13 @@ section {
 /* FAB Tambah Produk di Data Produk */
 #btn-add-product.fab {
   right: 16px;
-  bottom: 72px; /* Di atas bottom nav, beri jarak lebih */
+  bottom: 72px; /* Di atas bottom nav, beri jarak */
 }
 
 /* FAB Cart */
 .fab-cart {
   right: 16px;
-  bottom: 144px; /* lebih naik agar tidak dempet dgn FAB lainnya */
+  bottom: 144px;
 }
 
 /* Modal */
@@ -128,10 +163,15 @@ section {
 
 .modal-content {
   background-color: #fff;
-  margin: 10% auto;
+  margin: 5% auto;
   max-width: 400px;
   padding: 16px;
   border-radius: 8px;
+  position: relative;
+}
+
+.modal-content h3 {
+  margin-bottom: 16px;
 }
 
 .modal-actions {
@@ -165,6 +205,7 @@ section {
   border-radius: 4px;
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .product-item img {
@@ -179,27 +220,63 @@ section {
   flex: 1;
 }
 
+/* Tombol hapus produk di pojok kanan */
+.delete-product-btn {
+  background: none;
+  border: none;
+  color: #d00;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 8px;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 /* Section Header */
 .section-header {
   margin-bottom: 16px;
 }
 
-/* Cart Items */
-#cart-items .cart-item {
+/* Cart Items (Struk) */
+.receipt-container {
+  background-color: #fff;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+#cart-items {
+  margin-bottom: 8px;
+}
+
+.cart-item {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
+  margin: 4px 0;
+}
+
+.receipt-line {
+  border-bottom: 1px dashed #ccc;
+  margin: 8px 0;
+}
+
+.receipt-total {
+  text-align: right;
+  font-size: 16px;
+  margin: 4px 0;
 }
 
 /* Form Group */
 .form-group {
   margin-bottom: 12px;
+  position: relative;
 }
 
 .form-group label {
   display: block;
   font-weight: 500;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .form-group input {
@@ -207,4 +284,37 @@ section {
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+
+/* Tombol kecil untuk scanning barcode di form */
+.scan-barcode-btn {
+  position: absolute;
+  right: 0;
+  top: 28px;
+  background-color: #eee;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #555;
+}
+
+/* Data Produk Extra Actions (Backup/Restore/Reset) */
+.data-produk-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn, .restore-label {
+  background-color: #1565c0;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.action-btn:hover, .restore-label:hover {
+  opacity: 0.9;
 }
