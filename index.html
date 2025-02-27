@@ -25,6 +25,17 @@
     <section id="scanner-section" class="active-section">
       <div id="scanner-container">
         <div id="interactive" class="viewport"></div>
+        <!-- Overlay garis bantu -->
+        <div class="scanner-overlay"></div>
+      </div>
+
+      <!-- Tombol scan dari galeri -->
+      <div class="scan-gallery-wrapper">
+        <label for="file-input" class="scan-gallery-btn">
+          <span class="material-icons">image_search</span>
+          <span>Scan dari Galeri</span>
+        </label>
+        <input type="file" id="file-input" accept="image/*" style="display:none"/>
       </div>
     </section>
 
@@ -34,6 +45,14 @@
         <h2>Data Produk</h2>
       </div>
       <div id="product-list"></div>
+
+      <div class="data-produk-actions">
+        <button id="btn-reset-data" class="action-btn">Reset Data</button>
+        <button id="btn-backup-data" class="action-btn">Backup Data</button>
+        <label for="restore-file" class="action-btn restore-label">Restore Data</label>
+        <input type="file" id="restore-file" accept="application/json" style="display:none"/>
+      </div>
+
       <!-- Floating button untuk menambahkan data produk -->
       <button id="btn-add-product" class="fab" title="Tambah Produk">
         <span class="material-icons">add</span>
@@ -63,22 +82,32 @@
   <div id="modal-add-product" class="modal">
     <div class="modal-content">
       <h3>Tambah Produk</h3>
+
       <div class="form-group">
         <label for="product-barcode">Barcode</label>
         <input type="text" id="product-barcode" placeholder="Masukkan barcode"/>
+        <!-- Tombol untuk ambil foto barcode (decodeSingle) -->
+        <button id="btn-scan-barcode" class="scan-barcode-btn">
+          <span class="material-icons">camera_alt</span>
+        </button>
+        <input type="file" id="barcode-file-input" accept="image/*" capture="environment" style="display:none"/>
       </div>
+
       <div class="form-group">
         <label for="product-name">Nama Produk</label>
         <input type="text" id="product-name" placeholder="Masukkan nama produk"/>
       </div>
+
       <div class="form-group">
         <label for="product-price">Harga</label>
         <input type="number" id="product-price" placeholder="Masukkan harga produk"/>
       </div>
+
       <div class="form-group">
         <label for="product-img">URL Gambar (opsional)</label>
         <input type="text" id="product-img" placeholder="URL gambar (opsional)"/>
       </div>
+
       <div class="modal-actions">
         <button id="btn-save-product">Simpan</button>
         <button id="btn-cancel-product">Batal</button>
@@ -102,19 +131,24 @@
     </div>
   </div>
 
-  <!-- MODAL: CART / CHECKOUT -->
+  <!-- MODAL: CART / CHECKOUT (tampilkan seperti struk) -->
   <div id="modal-cart" class="modal">
     <div class="modal-content">
       <h3>Keranjang</h3>
-      <div id="cart-items"></div>
-      <hr/>
-      <p><strong>Total:</strong> <span id="cart-total">0</span></p>
-      <hr/>
+      <!-- Tampilan mirip struk -->
+      <div class="receipt-container">
+        <div id="cart-items"></div>
+        <div class="receipt-line"></div>
+        <p class="receipt-total"><strong>Total:</strong> <span id="cart-total">0</span></p>
+        <div class="receipt-line"></div>
+      </div>
+
       <div class="form-group">
         <label for="payment-input">Uang Dibayar</label>
         <input type="number" id="payment-input" min="0" placeholder="Masukkan jumlah pembayaran"/>
       </div>
       <p><strong>Kembalian:</strong> <span id="change-amount">0</span></p>
+
       <div class="modal-actions">
         <button id="btn-checkout">Selesaikan</button>
         <button id="btn-close-cart">Tutup</button>
