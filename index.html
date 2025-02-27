@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kasir Sederhana</title>
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- QuaggaJS CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+  <!-- Style CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- HEADER / NAVIGATION BAR -->
+  <header class="app-bar">
+    <h1>Kasir Sederhana</h1>
+  </header>
+
+  <!-- UTAMA: KONTEN -->
+  <main>
+
+    <!-- SECTION: SCANNER (langsung aktif) -->
+    <section id="scanner-section" class="active-section">
+      <div id="scanner-container">
+        <div id="interactive" class="viewport"></div>
+      </div>
+    </section>
+
+    <!-- SECTION: DATA PRODUK -->
+    <section id="data-produk-section">
+      <div class="section-header">
+        <h2>Data Produk</h2>
+      </div>
+      <div id="product-list"></div>
+      <!-- Floating button untuk menambahkan data produk -->
+      <button id="btn-add-product" class="fab" title="Tambah Produk">
+        <span class="material-icons">add</span>
+      </button>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM NAVIGATION -->
+  <nav class="bottom-nav">
+    <button id="btn-nav-scanner" class="nav-button active">
+      <span class="material-icons">qr_code_scanner</span>
+      <div>Scanner</div>
+    </button>
+    <button id="btn-nav-data-produk" class="nav-button">
+      <span class="material-icons">inventory_2</span>
+      <div>Produk</div>
+    </button>
+  </nav>
+
+  <!-- FLOATING BUTTON CART -->
+  <button id="btn-cart" class="fab-cart" title="Keranjang">
+    <span class="material-icons">shopping_cart</span>
+  </button>
+
+  <!-- MODAL: POP-UP TAMBAH PRODUK -->
+  <div id="modal-add-product" class="modal">
+    <div class="modal-content">
+      <h3>Tambah Produk</h3>
+      <div class="form-group">
+        <label for="product-barcode">Barcode</label>
+        <input type="text" id="product-barcode" placeholder="Masukkan barcode"/>
+      </div>
+      <div class="form-group">
+        <label for="product-name">Nama Produk</label>
+        <input type="text" id="product-name" placeholder="Masukkan nama produk"/>
+      </div>
+      <div class="form-group">
+        <label for="product-price">Harga</label>
+        <input type="number" id="product-price" placeholder="Masukkan harga produk"/>
+      </div>
+      <div class="form-group">
+        <label for="product-img">URL Gambar (opsional)</label>
+        <input type="text" id="product-img" placeholder="URL gambar (opsional)"/>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-save-product">Simpan</button>
+        <button id="btn-cancel-product">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: POP-UP JUMLAH BELI SETELAH SCAN -->
+  <div id="modal-quantity" class="modal">
+    <div class="modal-content">
+      <h3 id="modal-quantity-title">Produk Ditemukan</h3>
+      <p id="modal-quantity-product-name"></p>
+      <div class="form-group">
+        <label for="quantity-input">Jumlah</label>
+        <input type="number" id="quantity-input" value="1" min="1"/>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-add-to-cart">Tambahkan ke Keranjang</button>
+        <button id="btn-cancel-quantity">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CART / CHECKOUT -->
+  <div id="modal-cart" class="modal">
+    <div class="modal-content">
+      <h3>Keranjang</h3>
+      <div id="cart-items"></div>
+      <hr/>
+      <p><strong>Total:</strong> <span id="cart-total">0</span></p>
+      <hr/>
+      <div class="form-group">
+        <label for="payment-input">Uang Dibayar</label>
+        <input type="number" id="payment-input" min="0" placeholder="Masukkan jumlah pembayaran"/>
+      </div>
+      <p><strong>Kembalian:</strong> <span id="change-amount">0</span></p>
+      <div class="modal-actions">
+        <button id="btn-checkout">Selesaikan</button>
+        <button id="btn-close-cart">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script JS -->
+  <script src="script.js"></script>
+</body>
+</html>
