@@ -1,0 +1,210 @@
+/* Reset dasar */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Roboto', sans-serif;
+}
+
+body {
+  background-color: #f2f2f2;
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* App Bar */
+.app-bar {
+  background-color: #1565c0;
+  color: #fff;
+  padding: 16px;
+  text-align: center;
+}
+
+/* Main Section */
+main {
+  flex: 1;
+  position: relative;
+  padding-bottom: 56px; /* Untuk space bottom nav */
+}
+
+section {
+  display: none;
+  padding: 16px;
+}
+
+.active-section {
+  display: block;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 56px;
+  background-color: #ffffff;
+  display: flex;
+  box-shadow: 0 -1px 4px rgba(0,0,0,0.2);
+}
+
+.nav-button {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 4px;
+  text-align: center;
+  color: #555;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.nav-button .material-icons {
+  display: block;
+  font-size: 24px;
+  margin: 0 auto;
+}
+
+.nav-button.active {
+  color: #1565c0;
+}
+
+/* Scanner Container */
+#scanner-container {
+  width: 100%;
+  height: 60vh;
+  background-color: #000;
+  position: relative;
+}
+
+.viewport {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Floating Action Button (FAB) */
+.fab, .fab-cart {
+  position: fixed;
+  background-color: #1565c0;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* FAB Tambah Produk di Data Produk */
+#btn-add-product.fab {
+  right: 16px;
+  bottom: 72px; /* Di atas bottom nav, beri jarak lebih */
+}
+
+/* FAB Cart */
+.fab-cart {
+  right: 16px;
+  bottom: 144px; /* lebih naik agar tidak dempet dgn FAB lainnya */
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0; 
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  max-width: 400px;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.modal-actions {
+  margin-top: 16px;
+  text-align: right;
+}
+
+.modal-actions button {
+  margin-left: 8px;
+  padding: 8px 12px;
+  border: none;
+  background-color: #1565c0;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-actions button:hover {
+  opacity: 0.9;
+}
+
+/* Data Produk */
+#product-list {
+  margin-top: 16px;
+}
+
+.product-item {
+  background-color: #fff;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.product-item img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  margin-right: 8px;
+  border-radius: 4px;
+}
+
+.product-item .info {
+  flex: 1;
+}
+
+/* Section Header */
+.section-header {
+  margin-bottom: 16px;
+}
+
+/* Cart Items */
+#cart-items .cart-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+/* Form Group */
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
