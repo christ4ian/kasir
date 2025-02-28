@@ -1,320 +1,467 @@
-/* Reset dasar */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Roboto', sans-serif;
+/* ======= GLOBAL STATE ======= */
+let products = [];
+let cart = [];
+let lastDetectedCode = ""; // Menyimpan barcode terakhir
+
+/* ======= LOAD & SAVE KE LOCALSTORAGE ======= */
+function loadProductsFromLocal() {
+  const saved = localStorage.getItem("products");
+  if (saved) {
+    products = JSON.parse(saved);
+  } else {
+    products = [];
+  }
 }
 
-body {
-  background-color: #f2f2f2;
-  color: #333;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+function saveProductsToLocal() {
+  localStorage.setItem("products", JSON.stringify(products));
 }
 
-/* App Bar */
-.app-bar {
-  background-color: #1565c0;
-  color: #fff;
-  padding: 16px;
-  text-align: center;
+/* ======= SCANNER SETUP (Quagga) ======= */
+let quaggaInitialized = false;
+
+function initScanner() {
+  if (quaggaInitialized) {
+    return; // Sudah diinit
+  }
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: document.querySelector('#interactive'),
+      constraints: {
+        facingMode: "environment"
+      }
+    },
+    decoder: {
+      readers: ["ean_reader","code_128_reader"]
+    }
+  }, function(err) {
+    if (err) {
+      console.error(err);
+      alert("Gagal inisialisasi scanner: " + err);
+      return;
+    }
+    Quagga.start();
+    quaggaInitialized = true;
+  });
+
+  Quagga.onDetected((data) => {
+    let code = data.codeResult.code;
+    // Untuk meminimalisir "bergetar" / repeated detection, kita cek apakah sama dengan lastDetectedCode
+    if (code !== lastDetectedCode) {
+      lastDetectedCode = code;
+      document.getElementById("detected-code").value = code;
+    }
+  });
 }
 
-/* Main Section */
-main {
-  flex: 1;
-  position: relative;
-  padding-bottom: 56px; /* Untuk space bottom nav */
+/* ======= NAVIGASI ANTAR SECTION ======= */
+function showSection(sectionId) {
+  document.querySelectorAll("section").forEach(sec => sec.style.display = "none");
+  document.getElementById(sectionId).style.display = "block";
+
+  // Update nav-button active
+  document.querySelectorAll(".nav-button").forEach(btn => btn.classList.remove("active"));
+
+  if (sectionId === "scanner-section") {
+    document.getElementById("btn-nav-scanner").classList.add("active");
+    initScanner();
+  } else if (sectionId === "data-produk-section") {
+    document.getElementById("btn-nav-data-produk").classList.add("active");
+    renderProductList();
+  } else if (sectionId === "settings-section") {
+    document.getElementById("btn-nav-settings").classList.add("active");
+  }
 }
 
-section {
-  display: none;
-  padding: 16px;
+/* ======= SCAN DARI GALERI (decodeSingle) ======= */
+function scanFromImage(file) {
+  let reader = new FileReader();
+  reader.onload = function(e) {
+    Quagga.decodeSingle({
+      src: e.target.result,
+      decoder: { readers: ["ean_reader","code_128_reader"] }
+    }, (result) => {
+      if (result && result.codeResult) {
+        document.getElementById("detected-code").value = result.codeResult.code;
+        lastDetectedCode = result.codeResult.code;
+      } else {
+        alert("Gagal mendeteksi barcode dari gambar.");
+      }
+    });
+  };
+  reader.readAsDataURL(file);
 }
 
-.active-section {
-  display: block;
+/* ======= SCAN BARCODE (IMAGE) UNTUK INPUT PRODUK ======= */
+function scanBarcodeForProduct(file) {
+  let reader = new FileReader();
+  reader.onload = function(e) {
+    Quagga.decodeSingle({
+      src: e.target.result,
+      decoder: { readers: ["ean_reader","code_128_reader"] }
+    }, (result) => {
+      if (result && result.codeResult) {
+        // taruh ke #product-barcode
+        document.getElementById("product-barcode").value = result.codeResult.code;
+      } else {
+        alert("Gagal mendeteksi barcode dari foto. Pastikan fokus & jelas!");
+      }
+    });
+  };
+  reader.readAsDataURL(file);
 }
 
-/* Bottom Navigation */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  height: 56px;
-  background-color: #ffffff;
-  display: flex;
-  box-shadow: 0 -1px 4px rgba(0,0,0,0.2);
+/* ======= TAMBAH PRODUK & HAPUS PRODUK ======= */
+function addProduct(barcode, name, price, imgBase64) {
+  // Cek barcode ganda
+  let already = products.find(p => p.barcode === barcode);
+  if (already) {
+    alert("Barcode sudah ada!");
+    return;
+  }
+  products.push({ barcode, name, price, img: imgBase64 });
+  saveProductsToLocal();
 }
 
-.nav-button {
-  flex: 1;
-  border: none;
-  background: none;
-  padding: 4px;
-  text-align: center;
-  color: #555;
-  font-size: 12px;
-  cursor: pointer;
+function deleteProduct(barcode) {
+  products = products.filter(p => p.barcode !== barcode);
+  saveProductsToLocal();
+  renderProductList();
 }
 
-.nav-button .material-icons {
-  display: block;
-  font-size: 24px;
-  margin: 0 auto;
+/* ======= TAMPIL LIST PRODUK ======= */
+function renderProductList() {
+  let listDiv = document.getElementById("product-list");
+  listDiv.innerHTML = "";
+
+  products.forEach(prod => {
+    let item = document.createElement("div");
+    item.classList.add("product-item");
+
+    if (prod.img) {
+      let img = document.createElement("img");
+      img.src = prod.img;
+      item.appendChild(img);
+    }
+
+    let info = document.createElement("div");
+    info.classList.add("info");
+    info.innerHTML = `
+      <strong>${prod.name}</strong><br/>
+      Barcode: ${prod.barcode}<br/>
+      Harga: Rp ${prod.price}
+    `;
+    item.appendChild(info);
+
+    // Tombol hapus
+    let delBtn = document.createElement("button");
+    delBtn.textContent = "Hapus";
+    delBtn.classList.add("delete-product-btn");
+    delBtn.addEventListener("click", () => {
+      if (confirm("Hapus produk ini?")) {
+        deleteProduct(prod.barcode);
+      }
+    });
+    item.appendChild(delBtn);
+
+    listDiv.appendChild(item);
+  });
 }
 
-.nav-button.active {
-  color: #1565c0;
+/* ======= KERANJANG ======= */
+function addToCart(barcode, qty) {
+  let p = products.find(x => x.barcode === barcode);
+  if (!p) return;
+
+  let existing = cart.find(c => c.barcode === barcode);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    cart.push({ barcode: p.barcode, name: p.name, price: p.price, qty });
+  }
 }
 
-/* Scanner Container */
-#scanner-container {
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto; /* center */
-  position: relative;
-  background-color: #000;
+function renderCart() {
+  let cartItemsDiv = document.getElementById("cart-items");
+  cartItemsDiv.innerHTML = "";
+  let total = 0;
+  cart.forEach(item => {
+    let lineTotal = item.price * item.qty;
+    total += lineTotal;
+    let row = document.createElement("div");
+    row.classList.add("cart-item");
+    row.innerHTML = `<div>${item.name} (x${item.qty})</div><div>Rp ${lineTotal}</div>`;
+    cartItemsDiv.appendChild(row);
+  });
+  document.getElementById("cart-total").textContent = total;
 }
 
-/* QuaggaJS view */
-.viewport {
-  width: 100%;
-  height: 300px; /* atur tinggi di sini */
-  position: relative;
-  overflow: hidden;
-  margin: 0 auto;
+/* ======= MODAL ======= */
+function showModal(id) {
+  document.getElementById(id).style.display = "block";
+}
+function hideModal(id) {
+  document.getElementById(id).style.display = "none";
 }
 
-/* Overlay garis bantu */
-.scanner-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 80%;
-  height: 2px;
-  background: rgba(255,0,0,0.8);
-  transform: translate(-50%, -50%);
-  pointer-events: none; /* tidak bisa diklik */
+/* ======= BACKUP, RESTORE, RESET DATA ======= */
+function backupData() {
+  let dataStr = JSON.stringify(products, null, 2);
+  let blob = new Blob([dataStr], { type: "application/json" });
+  let url = URL.createObjectURL(blob);
+
+  let a = document.createElement("a");
+  a.href = url;
+  a.download = "backup_produk.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
-/* Tombol scan dari galeri */
-.scan-gallery-wrapper {
-  text-align: center;
-  margin-top: 16px;
-}
-.scan-gallery-btn {
-  display: inline-flex;
-  align-items: center;
-  background-color: #1565c0;
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.scan-gallery-btn .material-icons {
-  margin-right: 4px;
-}
-
-/* Floating Action Button (FAB) */
-.fab, .fab-cart {
-  position: fixed;
-  background-color: #1565c0;
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-  cursor: pointer;
-  z-index: 10;
+function restoreData(file) {
+  let reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      let arr = JSON.parse(e.target.result);
+      if (Array.isArray(arr)) {
+        products = arr;
+        saveProductsToLocal();
+        alert("Restore berhasil!");
+        renderProductList();
+      } else {
+        alert("Format JSON tidak valid!");
+      }
+    } catch (err) {
+      alert("Gagal memproses file: " + err);
+    }
+  };
+  reader.readAsText(file);
 }
 
-/* FAB Tambah Produk di Data Produk */
-#btn-add-product.fab {
-  right: 16px;
-  bottom: 72px; /* Di atas bottom nav, beri jarak */
+function resetData() {
+  if (!confirm("Anda yakin ingin RESET semua data?")) return;
+  localStorage.removeItem("products");
+  products = [];
+  cart = [];
+  renderProductList();
+  alert("Data berhasil di-reset!");
 }
 
-/* FAB Cart */
-.fab-cart {
-  right: 16px;
-  bottom: 144px;
+/* ======= DARK MODE & THEME COLOR ======= */
+function toggleDarkMode(checked) {
+  if (checked) {
+    document.body.classList.add("dark-mode");
+  } else {
+    document.body.classList.remove("dark-mode");
+  }
 }
 
-/* Modal */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 9999;
-  left: 0; 
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.4);
+function setThemeColor(color) {
+  // Ubah warna app-bar, fab, dsb. via inline style
+  document.querySelector(".app-bar").style.backgroundColor = color;
+  document.querySelectorAll(".fab, .fab-cart").forEach(el => {
+    el.style.backgroundColor = color;
+  });
+  // Ubah nav-button.active
+  let activeBtns = document.querySelectorAll(".nav-button.active");
+  activeBtns.forEach(btn => {
+    btn.style.color = color;
+  });
 }
 
-.modal-content {
-  background-color: #fff;
-  margin: 5% auto;
-  max-width: 400px;
-  padding: 16px;
-  border-radius: 8px;
-  position: relative;
-}
+/* ======= DOMContentLoaded ======= */
+document.addEventListener("DOMContentLoaded", () => {
+  loadProductsFromLocal();
+  showSection("scanner-section"); // default
 
-.modal-content h3 {
-  margin-bottom: 16px;
-}
+  // NAV BOTTOM
+  document.getElementById("btn-nav-scanner").addEventListener("click", () => {
+    showSection("scanner-section");
+  });
+  document.getElementById("btn-nav-data-produk").addEventListener("click", () => {
+    showSection("data-produk-section");
+  });
+  document.getElementById("btn-nav-settings").addEventListener("click", () => {
+    showSection("settings-section");
+  });
 
-.modal-actions {
-  margin-top: 16px;
-  text-align: right;
-}
+  // SCAN DARI GALERI
+  document.getElementById("file-input").addEventListener("change", (e) => {
+    let file = e.target.files[0];
+    if (file) {
+      scanFromImage(file);
+    }
+    e.target.value = "";
+  });
 
-.modal-actions button {
-  margin-left: 8px;
-  padding: 8px 12px;
-  border: none;
-  background-color: #1565c0;
-  color: #fff;
-  border-radius: 4px;
-  cursor: pointer;
-}
+  // TOMBOL OK DI SCANNER
+  document.getElementById("btn-confirm-scan").addEventListener("click", () => {
+    let code = document.getElementById("detected-code").value;
+    if (!code) {
+      alert("Belum ada barcode terdeteksi!");
+      return;
+    }
+    // Cek apakah produk ada
+    let found = products.find(p => p.barcode === code);
+    if (found) {
+      showQuantityModal(found);
+    } else {
+      alert("Produk dengan barcode " + code + " tidak ditemukan!");
+    }
+  });
 
-.modal-actions button:hover {
-  opacity: 0.9;
-}
+  // TOMBOL CART
+  document.getElementById("btn-cart").addEventListener("click", () => {
+    renderCart();
+    showModal("modal-cart");
+  });
 
-/* Data Produk */
-#product-list {
-  margin-top: 16px;
-}
+  // CART: TUTUP
+  document.getElementById("btn-close-cart").addEventListener("click", () => {
+    hideModal("modal-cart");
+  });
 
-.product-item {
-  background-color: #fff;
-  padding: 8px;
-  margin-bottom: 8px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  position: relative;
-}
+  // CART: HITUNG KEMBALIAN
+  document.getElementById("payment-input").addEventListener("input", () => {
+    let payment = parseInt(document.getElementById("payment-input").value) || 0;
+    let total = parseInt(document.getElementById("cart-total").textContent) || 0;
+    let change = payment - total;
+    document.getElementById("change-amount").textContent = change < 0 ? 0 : change;
+  });
 
-.product-item img {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  margin-right: 8px;
-  border-radius: 4px;
-}
+  // CART: CHECKOUT
+  document.getElementById("btn-checkout").addEventListener("click", () => {
+    let total = parseInt(document.getElementById("cart-total").textContent) || 0;
+    let payment = parseInt(document.getElementById("payment-input").value) || 0;
+    if (payment < total) {
+      alert("Uang dibayar kurang dari total!");
+      return;
+    }
+    let change = payment - total;
+    alert("Transaksi selesai!\nKembalian: Rp " + change);
+    cart = [];
+    hideModal("modal-cart");
+    document.getElementById("payment-input").value = "";
+    document.getElementById("change-amount").textContent = 0;
+    document.getElementById("cart-total").textContent = 0;
+  });
 
-.product-item .info {
-  flex: 1;
-}
+  // TAMBAH PRODUK
+  document.getElementById("btn-add-product").addEventListener("click", () => {
+    showModal("modal-add-product");
+  });
 
-/* Tombol hapus produk di pojok kanan */
-.delete-product-btn {
-  background: none;
-  border: none;
-  color: #d00;
-  cursor: pointer;
-  font-weight: bold;
-  margin-left: 8px;
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-}
+  // SIMPAN PRODUK
+  document.getElementById("btn-save-product").addEventListener("click", () => {
+    let barcode = document.getElementById("product-barcode").value.trim();
+    let name = document.getElementById("product-name").value.trim();
+    let price = parseInt(document.getElementById("product-price").value) || 0;
 
-/* Section Header */
-.section-header {
-  margin-bottom: 16px;
-}
+    if (!barcode || !name || !price) {
+      alert("Mohon isi barcode, nama, dan harga dengan benar!");
+      return;
+    }
 
-/* Cart Items (Struk) */
-.receipt-container {
-  background-color: #fff;
-  padding: 8px;
-  border-radius: 4px;
-}
+    // Ambil base64 image
+    let preview = document.getElementById("product-image-preview");
+    let imgBase64 = preview.dataset.img || "";
 
-#cart-items {
-  margin-bottom: 8px;
-}
+    addProduct(barcode, name, price, imgBase64);
+    hideModal("modal-add-product");
 
-.cart-item {
-  display: flex;
-  justify-content: space-between;
-  margin: 4px 0;
-}
+    // Bersihkan form
+    document.getElementById("product-barcode").value = "";
+    document.getElementById("product-name").value = "";
+    document.getElementById("product-price").value = "";
+    preview.src = "";
+    preview.style.display = "none";
+    preview.dataset.img = "";
 
-.receipt-line {
-  border-bottom: 1px dashed #ccc;
-  margin: 8px 0;
-}
+    // Refresh
+    renderProductList();
+  });
 
-.receipt-total {
-  text-align: right;
-  font-size: 16px;
-  margin: 4px 0;
-}
+  // BATAL PRODUK
+  document.getElementById("btn-cancel-product").addEventListener("click", () => {
+    hideModal("modal-add-product");
+  });
 
-/* Form Group */
-.form-group {
-  margin-bottom: 12px;
-  position: relative;
-}
+  // SCAN BARCODE VIA FOTO (UNTUK FORM PRODUK)
+  document.getElementById("btn-scan-barcode").addEventListener("click", () => {
+    document.getElementById("barcode-file-input").click();
+  });
+  document.getElementById("barcode-file-input").addEventListener("change", (e) => {
+    let file = e.target.files[0];
+    if (file) {
+      scanBarcodeForProduct(file);
+    }
+    e.target.value = "";
+  });
 
-.form-group label {
-  display: block;
-  font-weight: 500;
-  margin-bottom: 6px;
-}
+  // UPLOAD FOTO PRODUK (BASE64)
+  document.getElementById("product-image-file").addEventListener("change", (e) => {
+    let file = e.target.files[0];
+    if (!file) return;
+    let reader = new FileReader();
+    reader.onload = function(evt) {
+      let preview = document.getElementById("product-image-preview");
+      preview.src = evt.target.result;
+      preview.style.display = "block";
+      preview.dataset.img = evt.target.result; // simpan base64 di dataset
+    };
+    reader.readAsDataURL(file);
+  });
 
-.form-group input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
+  // QUANTITY MODAL
+  document.getElementById("btn-add-to-cart").addEventListener("click", () => {
+    let qty = parseInt(document.getElementById("quantity-input").value) || 1;
+    let modal = document.getElementById("modal-quantity");
+    let barcode = modal.dataset.barcode;
+    addToCart(barcode, qty);
 
-/* Tombol kecil untuk scanning barcode di form */
-.scan-barcode-btn {
-  position: absolute;
-  right: 0;
-  top: 28px;
-  background-color: #eee;
-  border: none;
-  padding: 8px;
-  cursor: pointer;
-  color: #555;
-}
+    hideModal("modal-quantity");
+    modal.dataset.barcode = "";
+  });
+  document.getElementById("btn-cancel-quantity").addEventListener("click", () => {
+    let modal = document.getElementById("modal-quantity");
+    modal.dataset.barcode = "";
+    hideModal("modal-quantity");
+  });
 
-/* Data Produk Extra Actions (Backup/Restore/Reset) */
-.data-produk-actions {
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-}
+  // SETTINGS: BACKUP, RESTORE, RESET
+  document.getElementById("btn-backup-data").addEventListener("click", () => {
+    backupData();
+  });
+  document.getElementById("restore-file").addEventListener("change", (e) => {
+    let file = e.target.files[0];
+    if (file) {
+      restoreData(file);
+    }
+    e.target.value = "";
+  });
+  document.getElementById("btn-reset-data").addEventListener("click", () => {
+    resetData();
+  });
 
-.action-btn, .restore-label {
-  background-color: #1565c0;
-  color: #fff;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  text-align: center;
-}
+  // SETTINGS: DARK MODE
+  document.getElementById("dark-mode-toggle").addEventListener("change", (e) => {
+    toggleDarkMode(e.target.checked);
+  });
 
-.action-btn:hover, .restore-label:hover {
-  opacity: 0.9;
+  // SETTINGS: THEME COLOR
+  document.getElementById("color-theme-input").addEventListener("input", (e) => {
+    let color = e.target.value;
+    setThemeColor(color);
+  });
+});
+
+/* ======= SHOW QUANTITY MODAL ======= */
+function showQuantityModal(product) {
+  document.getElementById("modal-quantity-product-name").textContent = product.name;
+  document.getElementById("quantity-input").value = 1;
+  let modal = document.getElementById("modal-quantity");
+  modal.dataset.barcode = product.barcode;
+  showModal("modal-quantity");
 }
