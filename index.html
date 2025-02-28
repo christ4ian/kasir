@@ -1,35 +1,40 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kasir Sederhana</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS Gamalama Express</title>
   <!-- Material Icons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <!-- QuaggaJS CDN -->
+  <!-- QuaggaJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
   <!-- Style CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- HEADER / NAVIGATION BAR -->
+  <!-- HEADER -->
   <header class="app-bar">
-    <h1>Kasir Sederhana</h1>
+    <h1>POS Gamalama Express</h1>
   </header>
 
-  <!-- UTAMA: KONTEN -->
+  <!-- MAIN CONTENT -->
   <main>
-
-    <!-- SECTION: SCANNER (langsung aktif) -->
+    <!-- SECTION SCANNER -->
     <section id="scanner-section" class="active-section">
       <div id="scanner-container">
         <div id="interactive" class="viewport"></div>
-        <!-- Overlay garis bantu -->
         <div class="scanner-overlay"></div>
       </div>
 
-      <!-- Tombol scan dari galeri -->
+      <!-- Hasil barcode -->
+      <div class="scanner-result">
+        <label>Hasil Scan:</label>
+        <input type="text" id="detected-code" readonly placeholder="Belum ada barcode terdeteksi">
+        <button id="btn-confirm-scan" class="confirm-scan-btn">OK</button>
+      </div>
+
+      <!-- Scan dari galeri -->
       <div class="scan-gallery-wrapper">
         <label for="file-input" class="scan-gallery-btn">
           <span class="material-icons">image_search</span>
@@ -39,26 +44,59 @@
       </div>
     </section>
 
-    <!-- SECTION: DATA PRODUK -->
+    <!-- SECTION DATA PRODUK -->
     <section id="data-produk-section">
       <div class="section-header">
         <h2>Data Produk</h2>
       </div>
       <div id="product-list"></div>
 
-      <div class="data-produk-actions">
-        <button id="btn-reset-data" class="action-btn">Reset Data</button>
-        <button id="btn-backup-data" class="action-btn">Backup Data</button>
-        <label for="restore-file" class="action-btn restore-label">Restore Data</label>
-        <input type="file" id="restore-file" accept="application/json" style="display:none"/>
-      </div>
-
-      <!-- Floating button untuk menambahkan data produk -->
+      <!-- FAB Tambah Produk -->
       <button id="btn-add-product" class="fab" title="Tambah Produk">
         <span class="material-icons">add</span>
       </button>
     </section>
 
+    <!-- SECTION SETTINGS -->
+    <section id="settings-section">
+      <div class="section-header">
+        <h2>Pengaturan</h2>
+      </div>
+
+      <!-- Dark Mode Toggle -->
+      <div class="setting-item">
+        <label class="setting-label" for="dark-mode-toggle">Dark Mode</label>
+        <input type="checkbox" id="dark-mode-toggle">
+      </div>
+
+      <!-- Pilih Warna Tema -->
+      <div class="setting-item">
+        <label class="setting-label" for="color-theme-input">Warna Tema</label>
+        <input type="color" id="color-theme-input" value="#1565c0">
+      </div>
+
+      <hr/>
+
+      <!-- Backup, Restore, Reset -->
+      <div class="setting-item">
+        <button id="btn-backup-data" class="action-btn">Backup Data</button>
+      </div>
+      <div class="setting-item">
+        <label for="restore-file" class="action-btn restore-label">Restore Data</label>
+        <input type="file" id="restore-file" accept="application/json" style="display:none"/>
+      </div>
+      <div class="setting-item">
+        <button id="btn-reset-data" class="action-btn">Reset Data</button>
+      </div>
+
+      <hr/>
+
+      <!-- Info Aplikasi -->
+      <div class="setting-item">
+        <p><strong>Tentang Aplikasi</strong></p>
+        <p>Versi 1.0, dikembangkan oleh Tim Gamalama.</p>
+      </div>
+    </section>
   </main>
 
   <!-- BOTTOM NAVIGATION -->
@@ -71,22 +109,25 @@
       <span class="material-icons">inventory_2</span>
       <div>Produk</div>
     </button>
+    <button id="btn-nav-settings" class="nav-button">
+      <span class="material-icons">settings</span>
+      <div>Settings</div>
+    </button>
   </nav>
 
-  <!-- FLOATING BUTTON CART -->
+  <!-- FAB CART -->
   <button id="btn-cart" class="fab-cart" title="Keranjang">
     <span class="material-icons">shopping_cart</span>
   </button>
 
-  <!-- MODAL: POP-UP TAMBAH PRODUK -->
+  <!-- MODAL: TAMBAH PRODUK -->
   <div id="modal-add-product" class="modal">
     <div class="modal-content">
       <h3>Tambah Produk</h3>
 
       <div class="form-group">
         <label for="product-barcode">Barcode</label>
-        <input type="text" id="product-barcode" placeholder="Masukkan barcode"/>
-        <!-- Tombol untuk ambil foto barcode (decodeSingle) -->
+        <input type="text" id="product-barcode" placeholder="Masukkan barcode">
         <button id="btn-scan-barcode" class="scan-barcode-btn">
           <span class="material-icons">camera_alt</span>
         </button>
@@ -95,17 +136,20 @@
 
       <div class="form-group">
         <label for="product-name">Nama Produk</label>
-        <input type="text" id="product-name" placeholder="Masukkan nama produk"/>
+        <input type="text" id="product-name" placeholder="Masukkan nama produk">
       </div>
 
       <div class="form-group">
         <label for="product-price">Harga</label>
-        <input type="number" id="product-price" placeholder="Masukkan harga produk"/>
+        <input type="number" id="product-price" placeholder="Masukkan harga produk">
       </div>
 
+      <!-- Unggah gambar produk (base64) -->
       <div class="form-group">
-        <label for="product-img">URL Gambar (opsional)</label>
-        <input type="text" id="product-img" placeholder="URL gambar (opsional)"/>
+        <label for="product-image-file">Foto Produk</label>
+        <input type="file" id="product-image-file" accept="image/*">
+        <!-- Preview kecil -->
+        <img id="product-image-preview" alt="Preview" style="max-width:100px; display:none; margin-top:8px;">
       </div>
 
       <div class="modal-actions">
@@ -115,14 +159,14 @@
     </div>
   </div>
 
-  <!-- MODAL: POP-UP JUMLAH BELI SETELAH SCAN -->
+  <!-- MODAL: JUMLAH BELI -->
   <div id="modal-quantity" class="modal">
     <div class="modal-content">
       <h3 id="modal-quantity-title">Produk Ditemukan</h3>
       <p id="modal-quantity-product-name"></p>
       <div class="form-group">
         <label for="quantity-input">Jumlah</label>
-        <input type="number" id="quantity-input" value="1" min="1"/>
+        <input type="number" id="quantity-input" value="1" min="1">
       </div>
       <div class="modal-actions">
         <button id="btn-add-to-cart">Tambahkan ke Keranjang</button>
@@ -131,11 +175,10 @@
     </div>
   </div>
 
-  <!-- MODAL: CART / CHECKOUT (tampilkan seperti struk) -->
+  <!-- MODAL: CART / CHECKOUT -->
   <div id="modal-cart" class="modal">
     <div class="modal-content">
       <h3>Keranjang</h3>
-      <!-- Tampilan mirip struk -->
       <div class="receipt-container">
         <div id="cart-items"></div>
         <div class="receipt-line"></div>
@@ -145,7 +188,7 @@
 
       <div class="form-group">
         <label for="payment-input">Uang Dibayar</label>
-        <input type="number" id="payment-input" min="0" placeholder="Masukkan jumlah pembayaran"/>
+        <input type="number" id="payment-input" min="0" placeholder="Masukkan jumlah pembayaran">
       </div>
       <p><strong>Kembalian:</strong> <span id="change-amount">0</span></p>
 
@@ -156,7 +199,7 @@
     </div>
   </div>
 
-  <!-- Script JS -->
+  <!-- SCRIPT -->
   <script src="script.js"></script>
 </body>
 </html>
